@@ -51,11 +51,7 @@ jobs:
         run: |
           set -euo pipefail
           .venv/bin/python scripts/validate.py baseline --package-root . --json
-      - name: Run contract, CLI and installer tests
-        run: |
-          set -euo pipefail
-          .venv/bin/python -m unittest discover -s tests/contracts -p 'test_*.py' -v
-      - name: Adversarial contract and installer checks
+      - name: Run contracts, CLI, installer and adversarial security tests
         run: |
           set -euo pipefail
           .venv/bin/python -m unittest discover -s tests/contracts -p 'test_*.py' -v
