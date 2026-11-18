@@ -19,8 +19,8 @@ def main():
     p.add_argument('--json', action='store_true')
     args = p.parse_args()
     try:
-        rules = load_baseline(args.package_root)
         if args.kind == 'baseline':
+            rules = load_baseline(args.package_root)
             output = {'status': 'VALID', 'rule_count': len(rules), 'source_provenance': 'NAO_VERIFICADA'}
         else:
             if not args.file:

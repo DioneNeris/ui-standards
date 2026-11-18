@@ -124,3 +124,16 @@ class ThreeSkillTests(unittest.TestCase):
         req=request(); res=result(ROOT,req)
         res['evidence'].append({'id':'bad','rule_id':'NO-999','method':'S','flow':'f','element':'e','state':'s','steps':['inspect'],'observation':'none','artifact':None,'captured_at':'2026-11-18T12:00:00Z','executor':'x','method_result':'NAO_VERIFICADO','sufficiency':'INDETERMINADA','sufficiency_reason':'none','assessor':'x','limitations':['none']})
         with self.assertRaises(ContractError): validate_result(res,req,ROOT)
+
+    def test_missing_baseline_allows_only_blocked_diagnostic(self):
+        import shutil, tempfile
+        from uistandards.core import BaselineError
+        req=request(); res=result(ROOT,req)
+        res['execution_state']='BLOQUEADA'; res['rules']=[]
+        res['baseline']['repository_integrity']='FALHOU'
+        res['errors']=[{'code':'BASELINE_MISSING','message':'missing','affected_ids':[],'action':'restore'}]
+        with tempfile.TemporaryDirectory() as tmp:
+            shutil.copytree(ROOT/'schemas',Path(tmp)/'schemas')
+            validate_result(res,req,Path(tmp))
+            res['execution_state']='COMPLETA'
+            with self.assertRaises((ContractError,BaselineError)): validate_result(res,req,Path(tmp))

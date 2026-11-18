@@ -4,7 +4,7 @@ import json
 from datetime import datetime, timezone
 from pathlib import Path
 from jsonschema import Draft202012Validator, FormatChecker
-from .core import COMMIT, FILES, aggregate, load_baseline
+from .core import COMMIT, FILES, BaselineError, aggregate, load_baseline
 
 
 class ContractError(ValueError):
@@ -47,8 +47,17 @@ def validate_request(request, root):
 
 def validate_result(result, request, root, request_bytes=None):
     schema_check(result, 'result', root)
-    validate_request(request, root)
-    rules = load_baseline(root)
+    try:
+        validate_request(request, root)
+        rules = load_baseline(root)
+    except BaselineError:
+        schema_check(request, 'request', root)
+        if (result['execution_state'] != 'BLOQUEADA' or result['rules'] or result['findings'] or result['evidence']
+                or not result['errors'] or result['baseline']['repository_integrity'] == 'VERIFICADA'
+                or result['skill'] != request['skill'] or result['mode'] != request['mode']
+                or (request_bytes is not None and result['request_ref'] != hashlib.sha256(request_bytes).hexdigest())):
+            raise ContractError('Invalid blocked diagnostic')
+        return result
     if result['skill'] != request['skill'] or result['mode'] != request['mode'] or result['target'] != request['target'] or result['environment'] != request['environment'] or result['authorization_ref'] != request['authorization']['reference'] or result['scope'] != request['target']['scope']:
         raise ContractError('Result does not match request')
     if request_bytes is not None and result['request_ref'] != hashlib.sha256(request_bytes).hexdigest():
