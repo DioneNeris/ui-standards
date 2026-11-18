@@ -1,0 +1,753 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "contract_version": {
+      "const": "1.0.0"
+    },
+    "result_version": {
+      "const": "1.0.0"
+    },
+    "run_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "skill": {
+      "enum": [
+        "ui-design",
+        "ui-audit",
+        "ui-code-review"
+      ]
+    },
+    "mode": {
+      "enum": [
+        "plan",
+        "implement",
+        "audit",
+        "review"
+      ]
+    },
+    "execution_state": {
+      "enum": [
+        "COMPLETA",
+        "PARCIAL",
+        "BLOQUEADA"
+      ]
+    },
+    "started_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "finished_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "executor": {
+      "type": "string",
+      "minLength": 1
+    },
+    "request_ref": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "baseline": {
+      "type": "object",
+      "properties": {
+        "repository": {
+          "type": "string",
+          "minLength": 1
+        },
+        "commit": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{40}$"
+        },
+        "version": {
+          "const": "G1-0.1.1"
+        },
+        "hashes": {
+          "type": "object",
+          "properties": {
+            "spec": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "matrix_derived": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "scenarios": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            }
+          },
+          "required": [
+            "spec",
+            "matrix_derived",
+            "scenarios"
+          ],
+          "additionalProperties": false
+        },
+        "repository_integrity": {
+          "enum": [
+            "VERIFICADA",
+            "FALHOU",
+            "NAO_VERIFICADA"
+          ]
+        },
+        "source_provenance": {
+          "enum": [
+            "VERIFICADA",
+            "NAO_VERIFICADA",
+            "DIVERGENTE"
+          ]
+        },
+        "approval_state": {
+          "enum": [
+            "HOMOLOGADA_COM_RESSALVAS",
+            "NAO_VERIFICADA"
+          ]
+        },
+        "approval_reference": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "repository",
+        "commit",
+        "version",
+        "hashes",
+        "repository_integrity",
+        "source_provenance",
+        "approval_state",
+        "approval_reference"
+      ],
+      "additionalProperties": false
+    },
+    "target": {
+      "type": "object",
+      "properties": {
+        "project": {
+          "type": "string",
+          "minLength": 1
+        },
+        "repository": {
+          "type": "string",
+          "minLength": 1
+        },
+        "revision": {
+          "type": "string",
+          "minLength": 1
+        },
+        "scope": {
+          "type": "string",
+          "minLength": 1
+        },
+        "flows": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 1
+        }
+      },
+      "required": [
+        "project",
+        "repository",
+        "revision",
+        "scope",
+        "flows"
+      ],
+      "additionalProperties": false
+    },
+    "environment": {
+      "type": "object",
+      "properties": {
+        "os": {
+          "type": "string",
+          "minLength": 1
+        },
+        "agent": {
+          "type": "string",
+          "minLength": 1
+        },
+        "agent_version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "browser": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "device": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "viewport": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "zoom": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "os",
+        "agent",
+        "agent_version",
+        "browser",
+        "device",
+        "viewport",
+        "zoom"
+      ],
+      "additionalProperties": false
+    },
+    "scope": {
+      "type": "string",
+      "minLength": 1
+    },
+    "authorization_ref": {
+      "type": "string",
+      "minLength": 1
+    },
+    "rules": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "scenario_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "applicability": {
+            "enum": [
+              "APLICAVEL",
+              "NAO_APLICAVEL",
+              "INDETERMINADA"
+            ]
+          },
+          "required_methods": {
+            "type": "array",
+            "items": {
+              "enum": [
+                "S",
+                "V",
+                "I",
+                "F"
+              ]
+            },
+            "uniqueItems": true
+          },
+          "method_results": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "method": {
+                  "enum": [
+                    "S",
+                    "V",
+                    "I",
+                    "F"
+                  ]
+                },
+                "applicability": {
+                  "enum": [
+                    "APLICAVEL",
+                    "NAO_APLICAVEL",
+                    "INDETERMINADA"
+                  ]
+                },
+                "status": {
+                  "enum": [
+                    "CONFORME",
+                    "NAO_CONFORME",
+                    "NAO_VERIFICADO",
+                    "NAO_APLICAVEL"
+                  ]
+                },
+                "evidence_ids": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "uniqueItems": true
+                },
+                "reason": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "additional": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "method",
+                "applicability",
+                "status",
+                "evidence_ids",
+                "reason"
+              ],
+              "additionalProperties": false
+            },
+            "minItems": 0
+          },
+          "status": {
+            "enum": [
+              "CONFORME",
+              "NAO_CONFORME",
+              "NAO_VERIFICADO",
+              "NAO_APLICAVEL"
+            ]
+          },
+          "exceptions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "rule_id": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "type": {
+                  "enum": [
+                    "NAO_APLICABILIDADE",
+                    "ALTERNATIVA_EQUIVALENTE",
+                    "WAIVER_CONVENCAO",
+                    "CONFLITO_BLOQUEANTE"
+                  ]
+                },
+                "context": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "justification": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "evidence_ids": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "uniqueItems": true
+                },
+                "approver": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "validity": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "review_at": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "impact": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "approval_state": {
+                  "enum": [
+                    "PENDENTE",
+                    "APROVADA"
+                  ]
+                }
+              },
+              "required": [
+                "rule_id",
+                "type",
+                "context",
+                "justification",
+                "evidence_ids",
+                "approver",
+                "validity",
+                "review_at",
+                "impact",
+                "approval_state"
+              ],
+              "additionalProperties": false
+            },
+            "minItems": 0
+          },
+          "limitations": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "minItems": 0
+          }
+        },
+        "required": [
+          "id",
+          "scenario_id",
+          "applicability",
+          "required_methods",
+          "method_results",
+          "status",
+          "exceptions",
+          "limitations"
+        ],
+        "additionalProperties": false
+      },
+      "minItems": 0
+    },
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "rule_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "method": {
+            "enum": [
+              "S",
+              "V",
+              "I",
+              "F"
+            ]
+          },
+          "observation": {
+            "type": "string",
+            "minLength": 1
+          },
+          "impact": {
+            "type": "string",
+            "minLength": 1
+          },
+          "evidence_ids": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "uniqueItems": true
+          }
+        },
+        "required": [
+          "id",
+          "rule_id",
+          "method",
+          "observation",
+          "impact",
+          "evidence_ids"
+        ],
+        "additionalProperties": false
+      },
+      "minItems": 0
+    },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "rule_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "method": {
+            "enum": [
+              "S",
+              "V",
+              "I",
+              "F"
+            ]
+          },
+          "flow": {
+            "type": "string",
+            "minLength": 1
+          },
+          "element": {
+            "type": "string",
+            "minLength": 1
+          },
+          "state": {
+            "type": "string",
+            "minLength": 1
+          },
+          "steps": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "minItems": 1
+          },
+          "observation": {
+            "type": "string",
+            "minLength": 1
+          },
+          "artifact": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "uri": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "sha256": {
+                    "type": "string",
+                    "pattern": "^[a-f0-9]{64}$"
+                  },
+                  "media_type": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "uri",
+                  "sha256",
+                  "media_type"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "captured_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "executor": {
+            "type": "string",
+            "minLength": 1
+          },
+          "method_result": {
+            "enum": [
+              "CONFORME",
+              "NAO_CONFORME",
+              "NAO_VERIFICADO",
+              "NAO_APLICAVEL"
+            ]
+          },
+          "sufficiency": {
+            "enum": [
+              "SUFICIENTE",
+              "INSUFICIENTE",
+              "INDETERMINADA"
+            ]
+          },
+          "sufficiency_reason": {
+            "type": "string",
+            "minLength": 1
+          },
+          "assessor": {
+            "type": "string",
+            "minLength": 1
+          },
+          "limitations": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "minItems": 0
+          }
+        },
+        "required": [
+          "id",
+          "rule_id",
+          "method",
+          "flow",
+          "element",
+          "state",
+          "steps",
+          "observation",
+          "artifact",
+          "captured_at",
+          "executor",
+          "method_result",
+          "sufficiency",
+          "sufficiency_reason",
+          "assessor",
+          "limitations"
+        ],
+        "additionalProperties": false
+      },
+      "minItems": 0
+    },
+    "limitations": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "minItems": 0
+    },
+    "errors": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "minLength": 1
+          },
+          "message": {
+            "type": "string",
+            "minLength": 1
+          },
+          "affected_ids": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "uniqueItems": true
+          },
+          "action": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "code",
+          "message",
+          "affected_ids",
+          "action"
+        ],
+        "additionalProperties": false
+      },
+      "minItems": 0
+    },
+    "artifacts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "uri": {
+            "type": "string",
+            "minLength": 1
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "media_type": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "uri",
+          "sha256",
+          "media_type"
+        ],
+        "additionalProperties": false
+      },
+      "minItems": 0
+    },
+    "changed_files": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "minItems": 0
+    },
+    "extensions": {
+      "type": "object",
+      "patternProperties": {
+        "^x-": {}
+      },
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "contract_version",
+    "result_version",
+    "run_id",
+    "skill",
+    "mode",
+    "execution_state",
+    "started_at",
+    "finished_at",
+    "executor",
+    "request_ref",
+    "baseline",
+    "target",
+    "environment",
+    "scope",
+    "authorization_ref",
+    "rules",
+    "findings",
+    "evidence",
+    "limitations",
+    "errors",
+    "artifacts",
+    "changed_files"
+  ],
+  "additionalProperties": false
+}

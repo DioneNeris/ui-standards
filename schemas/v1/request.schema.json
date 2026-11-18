@@ -1,0 +1,389 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "contract_version": {
+      "const": "1.0.0"
+    },
+    "skill": {
+      "enum": [
+        "ui-design",
+        "ui-audit",
+        "ui-code-review"
+      ]
+    },
+    "mode": {
+      "enum": [
+        "plan",
+        "implement",
+        "audit",
+        "review"
+      ]
+    },
+    "baseline": {
+      "type": "object",
+      "properties": {
+        "repository": {
+          "type": "string",
+          "minLength": 1
+        },
+        "commit": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{40}$"
+        },
+        "version": {
+          "const": "G1-0.1.1"
+        },
+        "hashes": {
+          "type": "object",
+          "properties": {
+            "spec": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "matrix_derived": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "scenarios": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            }
+          },
+          "required": [
+            "spec",
+            "matrix_derived",
+            "scenarios"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "repository",
+        "commit",
+        "version",
+        "hashes"
+      ],
+      "additionalProperties": false
+    },
+    "target": {
+      "type": "object",
+      "properties": {
+        "project": {
+          "type": "string",
+          "minLength": 1
+        },
+        "repository": {
+          "type": "string",
+          "minLength": 1
+        },
+        "revision": {
+          "type": "string",
+          "minLength": 1
+        },
+        "scope": {
+          "type": "string",
+          "minLength": 1
+        },
+        "flows": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 1
+        }
+      },
+      "required": [
+        "project",
+        "repository",
+        "revision",
+        "scope",
+        "flows"
+      ],
+      "additionalProperties": false
+    },
+    "environment": {
+      "type": "object",
+      "properties": {
+        "os": {
+          "type": "string",
+          "minLength": 1
+        },
+        "agent": {
+          "type": "string",
+          "minLength": 1
+        },
+        "agent_version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "browser": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "device": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "viewport": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "zoom": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "os",
+        "agent",
+        "agent_version",
+        "browser",
+        "device",
+        "viewport",
+        "zoom"
+      ],
+      "additionalProperties": false
+    },
+    "authorization": {
+      "type": "object",
+      "properties": {
+        "reference": {
+          "type": "string",
+          "minLength": 1
+        },
+        "operations": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        },
+        "writable_paths": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        },
+        "methods": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "S",
+              "V",
+              "I",
+              "F"
+            ]
+          },
+          "uniqueItems": true
+        }
+      },
+      "required": [
+        "reference",
+        "operations",
+        "writable_paths",
+        "methods"
+      ],
+      "additionalProperties": false
+    },
+    "output": {
+      "type": "object",
+      "properties": {
+        "delivery": {
+          "enum": [
+            "inline",
+            "file"
+          ]
+        },
+        "path": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "delivery",
+        "path"
+      ],
+      "additionalProperties": false
+    },
+    "task": {
+      "type": "string",
+      "minLength": 1
+    },
+    "environment_limitations": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "minItems": 0
+    },
+    "design": {
+      "type": "object",
+      "properties": {
+        "artifacts": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 0
+        },
+        "constraints": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 0
+        }
+      },
+      "required": [
+        "artifacts",
+        "constraints"
+      ],
+      "additionalProperties": false
+    },
+    "review": {
+      "type": "object",
+      "properties": {
+        "base": {
+          "type": "string",
+          "minLength": 1
+        },
+        "head": {
+          "type": "string",
+          "minLength": 1
+        },
+        "diff_scope": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "base",
+        "head",
+        "diff_scope"
+      ],
+      "additionalProperties": false
+    },
+    "extensions": {
+      "type": "object",
+      "patternProperties": {
+        "^x-": {}
+      },
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "contract_version",
+    "skill",
+    "mode",
+    "baseline",
+    "target",
+    "environment",
+    "authorization",
+    "output",
+    "task",
+    "environment_limitations"
+  ],
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "skill": {
+            "const": "ui-design"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "design"
+        ],
+        "properties": {
+          "mode": {
+            "enum": [
+              "plan",
+              "implement"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "skill": {
+            "const": "ui-audit"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "mode": {
+            "const": "audit"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "skill": {
+            "const": "ui-code-review"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "review"
+        ],
+        "properties": {
+          "mode": {
+            "const": "review"
+          }
+        }
+      }
+    }
+  ]
+}
