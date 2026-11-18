@@ -1,27 +1,27 @@
 # UI Standards — project status
 
-## Confirmed
-- Name/repository: `ui-standards`; public GitHub repository `DioneNeris/ui-standards`.
-- GitHub is the collaboration and verification handoff between ChatGPT and local Codex/Claude Code.
-- G1 v0.1.1 **homologated by PO with caveats** after the candidate and documentary closing records were written.
-- Normative scope: 53 rules across eight domains, 53 manual scenarios; WCAG 2.2 AA as target baseline for new web UI.
-- Initial G2: technical discovery/contracts for `ui-design`, `ui-audit`, `ui-code-review`; no blanket implementation approval.
-- Branch `g2/bootstrap-framework` created after README bootstrap on main.
+**Updated:** 2026-11-18. **Branch:** `g2/bootstrap-framework`.
 
-## This branch
-- Bootstrap agent instructions and collaboration protocol.
-- **Normative G1 source package not yet committed/verified here.** Original candidate documents and the later PO homologation must be kept distinct.
-- No skills, adapters or pilot runtime tests implemented by this documentation step.
+## Confirmed decisions
+- Repository: `DioneNeris/ui-standards`; GitHub is the exchange and verification point for ChatGPT, Codex and Claude Code.
+- G1 v0.1.1 **documentarily homologated by PO with controlled caveats**, after the original candidate closing record. See `docs/decisions/2026-11-18-PO-G1-G2-AUDITORIAS.md`.
+- G2 technical discovery and controlled documentation remediation authorized; **no implementation of skills, merge to main, or publication authorized**.
+- WCAG 2.2 AA is a **target** for new web interfaces, not a product-conformity assertion.
 
-## Pending controlled work
-1. Commit original G1 v0.1.1 specification, scenario catalog, baseline matrix, evidence schema, decisions and provenance without silently rewriting originals.
-2. Validate integrity, 53 IDs, scenario coverage, references and caveats; record discrepancies.
-3. Finalize technical skill/adaptor contracts and test strategy; seek PO authorization before implementation.
-4. Validate Codex/Claude locally, return evidence by push, then independent GitHub review.
-5. PO decision on acceptance, main merge and future release.
+## Current evidence
+- Six retrieved candidate-source files committed and preserved; **not** verified byte-for-byte against the absent original source package.
+- 53 normative IDs, 53 manual scenarios and 53 matrix records with matching identifiers and documented fields in two independent documentary audits.
+- Codex report: `tests/reports/2026-11-18-auditoria-documental-g1.md` (`4321314`).
+- Claude Code report: `tests/reports/2026-11-18-auditoria-documental-g1-claude.md` (`c6ff988`).
+- Original CSV contains a two-line extraction preamble; a clearly labeled **derived** consumable CSV is provided without modifying the original.
+- No pilot execution, detailed external WCAG validation, or runtime skill/adaptor tests.
 
-## Guardrails
-- Never confuse candidate document header with later PO approval, or treat G1 documentary homologation as application conformance.
-- Read-only audits, evidence-first status, explicit PO gate decisions.
-- Controlled backlog: unsaved changes, bulk actions, pagination.
-- No new normative IDs or silent rule changes in v0.1.1.
+## Open controlled work
+1. Recover source zip and independently compare source hashes and missing files: evidence schema, original README, changelog and scenario catalog CSV.
+2. Validate the derived CSV and remediation documentation locally; resolve source provenance.
+3. Resolve the exception-type vocabulary and evidence-record precedence before formal skill contracts are accepted.
+4. Define and validate G2 contracts and agent discovery; seek separate authorization **before implementation**.
+5. Track controlled G2/G3 caveats: evaluator repeatability, positive/negative examples, 53 pilot scenarios, WCAG verification.
+6. PO to decide LICENSE and any commit-signing policy separately.
+
+See `docs/BACKLOG-G2-G3.md` and `framework/SOURCE-INVENTORY.md`. G2 **remains open**. No new normative IDs; no automatic merge.
