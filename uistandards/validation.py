@@ -2,7 +2,7 @@
 import hashlib
 import json
 from datetime import datetime, timezone
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from jsonschema import Draft202012Validator, FormatChecker
 from .core import COMMIT, FILES, BaselineError, aggregate, load_baseline
 
@@ -19,6 +19,17 @@ def schema_check(value, name, root):
         raise ContractError(f'{name}: {errors[0].json_path}: {errors[0].message}')
 
 
+def safe_relative_path(value):
+    if not isinstance(value, str) or not value or '\\' in value or any(ord(c) < 32 for c in value):
+        raise ContractError('Unsafe writable path')
+    path = PurePosixPath(value)
+    if path.is_absolute() or any(p in ('.', '..') for p in value.split('/')) or not path.parts:
+        raise ContractError('Unsafe writable path')
+    if path.parts[0] in ('.git', '.agents', '.claude', 'framework', 'schemas', 'skills', 'uistandards', 'scripts', 'tests', '.github'):
+        raise ContractError('Protected writable path')
+    return path
+
+
 def validate_request(request, root, verify_baseline=True):
     schema_check(request, 'request', root)
     if verify_baseline:
@@ -27,6 +38,8 @@ def validate_request(request, root, verify_baseline=True):
     if b['commit'] != COMMIT or b['hashes'] != {k: FILES[k][1] for k in ('spec', 'matrix_derived', 'scenarios')}:
         raise ContractError('Baseline does not match pinned package')
     a = request['authorization']
+    if set(a['operations']) - {'read', 'write_report', 'implement'}:
+        raise ContractError('Unknown authorization operation')
     if any(request['environment'][x] is None for x in ('browser','device','viewport','zoom')) and not request['environment_limitations']:
         raise ContractError('Unknown environment requires limitations')
     if request['output']['delivery'] == 'inline' and request['output']['path'] is not None:
@@ -41,8 +54,13 @@ def validate_request(request, root, verify_baseline=True):
         allowed = [request['output']['path']] if request['output']['delivery'] == 'file' else []
         if set(a['writable_paths']) != set(allowed):
             raise ContractError('Read-only mode has writable product paths')
-    if request['mode'] == 'implement' and ('implement' not in a['operations'] or not a['writable_paths']):
-        raise ContractError('AUTHORIZATION_MISSING')
+    if request['mode'] == 'implement':
+        if 'implement' not in a['operations'] or not a['writable_paths']:
+            raise ContractError('AUTHORIZATION_MISSING')
+        for path in a['writable_paths']:
+            safe_relative_path(path)
+    if request['output']['delivery'] == 'file':
+        safe_relative_path(request['output']['path'])
     return request
 
 
@@ -51,9 +69,9 @@ def validate_result(result, request, root, request_bytes=None):
     # A blocked diagnostic may originate in an agent unable to access the baseline,
     # even when the independent validator can read its own healthy checkout.
     # Validate the envelope and identity, but never accept normative findings.
-    if result['execution_state'] == 'BLOQUEADA' and not result['rules']:
+    if result['execution_state'] == 'BLOQUEADA':
         validate_request(request, root, verify_baseline=False)
-        if (result['findings'] or result['evidence'] or result['changed_files']
+        if (result['rules'] or result['findings'] or result['evidence'] or result['changed_files'] or result['artifacts']
                 or not result['errors'] or not result['limitations']
                 or result['skill'] != request['skill'] or result['mode'] != request['mode']
                 or result['target'] != request['target']
@@ -61,9 +79,12 @@ def validate_result(result, request, root, request_bytes=None):
                 or result['environment'] != request['environment']
                 or result['authorization_ref'] != request['authorization']['reference']
                 or result['baseline']['repository_integrity'] == 'VERIFICADA'
+                or result['baseline']['source_provenance'] != 'NAO_VERIFICADA'
+                or result['baseline']['approval_state'] != 'HOMOLOGADA_COM_RESSALVAS'
                 or any(result['baseline'][k] != request['baseline'][k] for k in ('repository','commit','version','hashes'))
                 or (request_bytes is not None and result['request_ref'] != hashlib.sha256(request_bytes).hexdigest())):
             raise ContractError('Invalid blocked diagnostic')
+        check_times(result)
         return result
     validate_request(request, root)
     rules = load_baseline(root)
@@ -78,13 +99,17 @@ def validate_result(result, request, root, request_bytes=None):
         raise ContractError('Unsupported baseline status')
     if not result['limitations']:
         raise ContractError('Source provenance limitation missing')
-    if result['skill'] in ('ui-audit','ui-code-review') and result['changed_files']:
+    if result['mode'] != 'implement' and result['changed_files']:
         raise ContractError('Read-only changed_files must be empty')
-    for key in ('started_at','finished_at'):
-        if not result[key].endswith('Z'):
-            raise ContractError('Time must be UTC')
-    if datetime.fromisoformat(result['finished_at'].replace('Z','+00:00')) < datetime.fromisoformat(result['started_at'].replace('Z','+00:00')):
-        raise ContractError('End precedes start')
+    if result['mode'] == 'implement':
+        writable = [safe_relative_path(p) for p in request['authorization']['writable_paths']]
+        for name in result['changed_files']:
+            changed = safe_relative_path(name)
+            if not any(changed == p or p in changed.parents for p in writable):
+                raise ContractError('Changed file outside writable paths')
+    if result['execution_state'] == 'COMPLETA' and result['errors']:
+        raise ContractError('Complete execution cannot contain errors')
+    check_times(result)
     items = result['rules']
     if len(items) != 53 or len({r['id'] for r in items}) != 53 or {r['id'] for r in items} != set(rules):
         raise ContractError('Expected 53 unique rules')
@@ -115,6 +140,8 @@ def validate_result(result, request, root, request_bytes=None):
         if rule['scenario_id'] != baseline['scenario_id'] or rule['required_methods'] != baseline['methods']:
             raise ContractError('Rule differs from baseline')
         method_results = rule['method_results']
+        if {m['method'] for m in method_results if not m.get('additional', False)} != set(baseline['methods']):
+            raise ContractError('Missing required method results')
         if len({m['method'] for m in method_results}) != len(method_results):
             raise ContractError('Duplicate method')
         statuses = {}
@@ -124,7 +151,7 @@ def validate_result(result, request, root, request_bytes=None):
                 raise ContractError('Additional method not marked')
             if state in ('CONFORME','NAO_CONFORME') and item['applicability'] != 'APLICAVEL':
                 raise ContractError('Determinate status requires applicable method')
-            if state in ('CONFORME','NAO_CONFORME') and m not in request['authorization']['methods']:
+            if state in ('CONFORME','NAO_CONFORME','NAO_APLICAVEL') and m not in request['authorization']['methods']:
                 raise ContractError('Method not authorized')
             if (state == 'NAO_APLICAVEL') != (item['applicability'] == 'NAO_APLICAVEL'):
                 raise ContractError('Method applicability inconsistent')
@@ -135,6 +162,11 @@ def validate_result(result, request, root, request_bytes=None):
                     proof(eid, rid, m, state)
             elif any(eid not in evidence for eid in item['evidence_ids']):
                 raise ContractError('Unknown evidence')
+            if state == 'NAO_APLICAVEL':
+                approved = [x for x in rule['exceptions'] if x['type'] == 'NAO_APLICABILIDADE'
+                            and x['approval_state'] == 'APROVADA' and set(item['evidence_ids']) <= set(x['evidence_ids'])]
+                if not approved:
+                    raise ContractError('Method N/A requires approved exception')
             statuses[m] = state
         for exc in rule['exceptions']:
             if exc['type'] == 'CONFLITO_BLOQUEANTE' and rule['status'] in ('CONFORME', 'NAO_APLICAVEL'):
@@ -157,3 +189,13 @@ def validate_result(result, request, root, request_bytes=None):
         if f['rule_id'] not in rules or not f['evidence_ids'] or any(eid not in evidence or evidence[eid]['rule_id'] != f['rule_id'] or evidence[eid]['method'] != f['method'] for eid in f['evidence_ids']):
             raise ContractError('Finding has invalid references')
     return result
+
+
+def check_times(result):
+    import re
+    for key in ('started_at', 'finished_at'):
+        value = result[key]
+        if not re.fullmatch(r'\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?Z', value):
+            raise ContractError('Time must be RFC3339 UTC')
+    if datetime.fromisoformat(result['finished_at'].replace('Z', '+00:00')) < datetime.fromisoformat(result['started_at'].replace('Z', '+00:00')):
+        raise ContractError('End precedes start')
