@@ -16,5 +16,5 @@ def result(root, req):
         'execution_state':'PARCIAL','started_at':'2026-11-18T12:00:00Z','finished_at':'2026-11-18T12:01:00Z','executor':'fixture','request_ref':'0'*64,
         'baseline':{**req['baseline'],'repository_integrity':'VERIFICADA','source_provenance':'NAO_VERIFICADA','approval_state':'HOMOLOGADA_COM_RESSALVAS','approval_reference':'registro aditivo'},
         'target':req['target'],'environment':req['environment'],'scope':req['target']['scope'],'authorization_ref':req['authorization']['reference'],
-        'rules':[{'id':rid,'scenario_id':r['scenario_id'],'applicability':'INDETERMINADA','required_methods':r['methods'],'method_results':[],'status':'NAO_VERIFICADO','exceptions':[],'limitations':['fora do escopo']} for rid,r in rules.items()],
+        'rules':[{'id':rid,'scenario_id':r['scenario_id'],'applicability':'INDETERMINADA','required_methods':r['methods'],'method_results':[{'method':m,'applicability':'INDETERMINADA','status':'NAO_VERIFICADO','evidence_ids':[],'reason':'not executed'} for m in r['methods']],'status':'NAO_VERIFICADO','exceptions':[],'limitations':['fora do escopo']} for rid,r in rules.items()],
         'findings':[],'evidence':[],'limitations':['Proveniência não verificada'],'errors':[],'artifacts':[],'changed_files':[]}
