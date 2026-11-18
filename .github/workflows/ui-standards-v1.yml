@@ -1,0 +1,68 @@
+name: UI Standards V1 validation
+
+on:
+  push:
+    branches:
+      - g2/bootstrap-framework
+    paths:
+      - 'uistandards/**'
+      - 'scripts/**'
+      - 'schemas/**'
+      - 'skills/**'
+      - 'tests/**'
+      - 'framework/**'
+      - 'requirements-lock.txt'
+      - '.github/workflows/ui-standards-v1.yml'
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ui-standards-v1-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Baseline, contracts and installer
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Checkout with pinned baseline history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Create isolated venv and install locked dependencies
+        run: |
+          set -euo pipefail
+          python -m venv .venv
+          .venv/bin/python -m pip install --disable-pip-version-check --require-hashes -r requirements-lock.txt
+          .venv/bin/python -m pip check
+      - name: Verify pinned baseline
+        run: |
+          set -euo pipefail
+          .venv/bin/python scripts/validate.py baseline --package-root . --json
+      - name: Run contract, CLI and installer tests
+        run: |
+          set -euo pipefail
+          .venv/bin/python -m unittest discover -s tests/contracts -p 'test_*.py' -v
+      - name: Verify adapter installation in a disposable directory
+        run: |
+          set -euo pipefail
+          mkdir -p "${RUNNER_TEMP}/ui-standards-fixture"
+          .venv/bin/python scripts/install.py --package-root . --project-root "${RUNNER_TEMP}/ui-standards-fixture" --agents codex,claude --dry-run
+          .venv/bin/python scripts/install.py --package-root . --project-root "${RUNNER_TEMP}/ui-standards-fixture" --agents codex,claude
+          .venv/bin/python scripts/install.py --package-root . --project-root "${RUNNER_TEMP}/ui-standards-fixture" --agents codex,claude
+      - name: Verify normative source files were not changed by tests
+        run: |
+          set -euo pipefail
+          git diff --exit-code -- framework/specification tests/scenarios framework/traceability
