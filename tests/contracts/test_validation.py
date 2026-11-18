@@ -137,3 +137,36 @@ class ThreeSkillTests(unittest.TestCase):
             validate_result(res,req,Path(tmp))
             res['execution_state']='COMPLETA'
             with self.assertRaises((ContractError,BaselineError)): validate_result(res,req,Path(tmp))
+
+class BlockedDiagnosticRegressionTests(unittest.TestCase):
+    def test_executor_cannot_access_baseline_even_when_validator_can(self):
+        req = request()
+        res = result(ROOT, req)
+        res['execution_state'] = 'BLOQUEADA'
+        res['rules'] = []
+        res['baseline']['repository_integrity'] = 'NAO_VERIFICADA'
+        res['errors'] = [{'code': 'BASELINE_MISSING', 'message': 'executor access denied',
+                          'affected_ids': [], 'action': 'grant read access'}]
+        res['scope'] = 'executor could not establish scope'
+        validate_result(res, req, ROOT)
+        res['findings'] = [{'id':'f','rule_id':'LAY-001','method':'S','observation':'claim',
+                            'impact':'unknown','evidence_ids':[]}]
+        with self.assertRaises(ContractError):
+            validate_result(res, req, ROOT)
+
+    def test_blocked_result_rejects_identity_or_write_claims(self):
+        req = request()
+        res = result(ROOT, req)
+        res['execution_state'] = 'BLOQUEADA'
+        res['rules'] = []
+        res['baseline']['repository_integrity'] = 'NAO_VERIFICADA'
+        res['errors'] = [{'code': 'BASELINE_MISSING', 'message': 'access denied',
+                          'affected_ids': [], 'action': 'retry'}]
+        validate_result(res, req, ROOT)
+        res['changed_files'] = ['app/cadastro.html']
+        with self.assertRaises(ContractError):
+            validate_result(res, req, ROOT)
+        res['changed_files'] = []
+        res['target'] = dict(res['target'], project='different')
+        with self.assertRaises(ContractError):
+            validate_result(res, req, ROOT)
