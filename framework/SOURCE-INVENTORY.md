@@ -1,8 +1,8 @@
 # G1 v0.1.1 — source inventory and limitations
 
-This directory set contains **copies of retrieved original candidate documents**, not a rewritten or silently amended specification. The original candidate header says NOT HOMOLOGATED because it predates the PO's subsequent G1 homologation with caveats. See `docs/decisions/G1-REGISTRO-DECISOES-FECHAMENTO-v0.1.1.md` and `docs/PROJECT-STATUS.md`.
+Six original candidate-document **copies** were imported into `g2/bootstrap-framework`. Their original historical headers are unchanged, including “CANDIDATA / NÃO HOMOLOGADO”. The **later** PO G1 homologation with caveats and G2 authorization are recorded separately in `docs/decisions/2026-11-18-PO-G1-G2-AUDITORIAS.md`; this record is secondary to the conversation, not independent provenance.
 
-## Imported originals
+## Imported copies — preserved
 - `framework/specification/UI-UX-FRAMEWORK-SPEC-v0.1.1-CANDIDATA.md`
 - `tests/scenarios/G1-CATALOGO-CENARIOS-v0.1.1.md`
 - `framework/traceability/G1-MATRIZ-BASELINE-v0.1.1.csv`
@@ -10,15 +10,19 @@ This directory set contains **copies of retrieved original candidate documents**
 - `docs/decisions/G1-MAPA-SANEAMENTO-AUDITORIA-v0.1.1.md`
 - `docs/decisions/G1-PARECER-FECHAMENTO-v0.1.1-READONLY.md`
 
-## Not yet recovered / not asserted complete
-The source package's separate evidence schema, original package README and changelog were not located as independently retrievable files in the current source search. Do **not** invent their contents or claim complete source-package integrity. The G1 baseline CSV is present; the original v0.1.0 traceability files have not been substituted for missing v0.1.1 documents.
+## Derived, not original
+- `framework/traceability/derived/G1-MATRIZ-BASELINE-v0.1.1-normalizada.csv`: original matrix with **only the first two extraction-wrapper lines removed**, and final newline ensured. The original has a non-CSV preamble; use the derived file for automated CSV parsing, but do not confuse it with a recovered source. Validate any downstream contract against its header and 53 rows.
 
-## Local agent verification required
-1. Compare imported files with authoritative source package, if available, including hashes.
-2. Count and cross-check 53 unique normative IDs and 53 corresponding scenarios.
-3. Verify baseline CSV rows and source IDs; flag gaps without silently repairing them.
-4. Check evidence schema and missing artifacts; mark unverified items `NAO_VERIFICADO`.
-5. Preserve G1 caveats: WCAG 2.2 AA target only; scenario catalog is not proof of test execution.
-6. Return an evidence-backed report and commit SHA for ChatGPT review.
+## Missing / unverified original package items
+- Source ZIP / independent source hashes, so identity with the authoritative source is **NAO_VERIFICADO**.
+- Separate machine-readable evidence schema.
+- Original package README.
+- Original changelog.
+- **Scenario catalog CSV**, referenced by the documentary closing opinion; the available Markdown catalog is not proof of equivalence.
 
-No skill implementation or product UI test is authorized by this inventory.
+Do not fabricate absent originals or substitute v0.1.0 files for v0.1.1. The original evidence model exists in prose in §3 of the specification but is not proof of a separate schema file.
+
+## Documentary verification
+Two independent reports (Codex `4321314`, Claude `c6ff988`) found 53 matching rule IDs, 53 scenarios and 53 matrix rows. Neither report proves original-package authenticity, product conformance, execution of scenarios, or functioning skills. See `tests/reports/`.
+
+**Next:** recover and compare source package; validate derived CSV; resolve remaining evidence and contract decisions. No skill implementation or merge is authorized.
