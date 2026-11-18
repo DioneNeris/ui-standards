@@ -55,6 +55,10 @@ jobs:
         run: |
           set -euo pipefail
           .venv/bin/python -m unittest discover -s tests/contracts -p 'test_*.py' -v
+      - name: Adversarial contract and installer checks
+        run: |
+          set -euo pipefail
+          .venv/bin/python -m unittest discover -s tests/contracts -p 'test_*.py' -v
       - name: Verify adapter installation in a disposable directory
         run: |
           set -euo pipefail
