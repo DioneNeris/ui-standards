@@ -1,0 +1,57 @@
+{
+ "contract_version": "1.0.0",
+ "baseline": {
+  "repository": "ui-standards",
+  "commit": "ffc75647ccadcf71b51437bcbe9eb63c0039efc7",
+  "version": "G1-0.1.1",
+  "hashes": {
+   "spec": "4b5f2c33f8545c9a1bb8d3fa627fe1a2c76ebab4f964b96153099f64590ab39a",
+   "matrix_derived": "523c8f31b35f157951cb374ef3b72d26c18f78c52e9b78ce414f2836b8d90e7e",
+   "scenarios": "37c6d84ef09e534043e78be29383fce234186bdd332163535b273af5bd604be3"
+  }
+ },
+ "target": {
+  "project": "fixture-sintetica-cadastro-fornecedor",
+  "repository": "/tmp/claude-1000/-home-dione-projects-ui-standards/466048a1-e42e-4cb7-9096-fec64faa59a9/scratchpad/pilot-claude",
+  "revision": "62a242677b9ebfb64712b09bfcbebed6b9f12066",
+  "scope": "app/cadastro.html (arquivo estático sintético; somente inspeção estática)",
+  "flows": [
+   "cadastro de fornecedor: formulário"
+  ]
+ },
+ "environment": {
+  "os": "linux (WSL2)",
+  "agent": "claude-code",
+  "agent_version": "2.1.327",
+  "browser": null,
+  "device": null,
+  "viewport": null,
+  "zoom": null
+ },
+ "output": {
+  "delivery": "inline",
+  "path": null
+ },
+ "environment_limitations": [
+  "Sem navegador, dispositivo, viewport ou zoom: apenas o método S é executável; V, I e F não foram executados.",
+  "Fixture sintética; não é produto real."
+ ],
+ "skill": "ui-code-review",
+ "mode": "review",
+ "authorization": {
+  "reference": "PO-2026-11-18-ensaio-integracao-claude-v1 (read-only, fixture sintética)",
+  "operations": [
+   "read"
+  ],
+  "writable_paths": [],
+  "methods": [
+   "S"
+  ]
+ },
+ "task": "Revisar o diff base..head de app/cadastro.html contra G1 v0.1.1, somente método S, entregando o result JSON inline.",
+ "review": {
+  "base": "9e7768241320d2c7c3b4858bfc2eea5ea5d06d05",
+  "head": "62a242677b9ebfb64712b09bfcbebed6b9f12066",
+  "diff_scope": "app/cadastro.html"
+ }
+}

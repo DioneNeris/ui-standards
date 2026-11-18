@@ -1,0 +1,17 @@
+diff --git a/app/cadastro.html b/app/cadastro.html
+index 36f2d6b..54a24c9 100644
+--- a/app/cadastro.html
++++ b/app/cadastro.html
+@@ -7,10 +7,10 @@
+   <form id="fornecedor" action="#" method="post">
+     <label for="razao">Razão social</label>
+     <input id="razao" name="razao" type="text" required>
+-    <label for="cnpj">CNPJ</label>
+-    <input id="cnpj" name="cnpj" type="text" inputmode="numeric">
++    <input id="cnpj" name="cnpj" type="text" inputmode="numeric" placeholder="CNPJ">
+     <div class="acoes">
+       <button type="button">Cancelar</button>
++      <button type="button" class="icone-lixeira"><svg width="16" height="16" aria-hidden="true"><rect width="16" height="16"/></svg></button>
+       <button type="submit">Salvar fornecedor</button>
+     </div>
+   </form>
