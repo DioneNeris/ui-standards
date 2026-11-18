@@ -1,5 +1,8 @@
 # UI Standards — project status
 
+> **Additive update (2026-11-18):** V1 pilot was subsequently implemented under specific PO authorization. Independent Claude Web read-only audit identified blockers AUD-02/AUD-03 and other gaps; remediation is in progress on `g2/bootstrap-framework`. The CI validation workflow now includes a disposable preflight on branch push; the separate manual `workflow_dispatch` file cannot be dispatched until registered on the default branch. No merge to main or paid agent invocation is authorized. Prior text below is historical.
+
+
 **Updated:** 2026-11-18. **Branch:** `g2/bootstrap-framework`.
 
 ## Confirmed decisions
