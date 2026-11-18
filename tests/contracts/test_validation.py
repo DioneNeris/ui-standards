@@ -106,7 +106,8 @@ class EvidenceTests(unittest.TestCase):
             p=Path(tmp)/'proof'; p.write_text('no dialogs'); h=hashlib.sha256(p.read_bytes()).hexdigest()
             row=res['rules'][0]; row['applicability']='NAO_APLICAVEL'; row['status']='NAO_APLICAVEL'
             res['evidence'].append({'id':'na-proof','rule_id':row['id'],'method':'V','flow':'f','element':'e','state':'s','steps':['inspect'],'observation':'absent','artifact':{'uri':str(p),'sha256':h,'media_type':'text/plain'},'captured_at':'2026-11-18T12:00:00Z','executor':'reviewer','method_result':'NAO_APLICAVEL','sufficiency':'SUFICIENTE','sufficiency_reason':'absence documented','assessor':'reviewer','limitations':[]})
-            req['authorization']['methods'].append('V')\n            row['exceptions'].append({'rule_id':row['id'],'type':'NAO_APLICABILIDADE','context':'scope','justification':'absent','evidence_ids':['na-proof'],'approver':'PO','validity':'pilot','review_at':'2027-01-01','impact':'not applicable','approval_state':'APROVADA'})
+            req['authorization']['methods'].append('V')
+            row['exceptions'].append({'rule_id':row['id'],'type':'NAO_APLICABILIDADE','context':'scope','justification':'absent','evidence_ids':['na-proof'],'approver':'PO','validity':'pilot','review_at':'2027-01-01','impact':'not applicable','approval_state':'APROVADA'})
             validate_result(res,req,ROOT)
             row['exceptions'][0]['approval_state']='PENDENTE'
             with self.assertRaises(ContractError): validate_result(res,req,ROOT)
