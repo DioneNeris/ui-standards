@@ -1,5 +1,8 @@
 # Agent operating instructions — UI Standards
 
+> **Current additive state (2026-11-18):** The PO subsequently authorized V1 pilot implementation and a limited remediation round on `g2/bootstrap-framework`. Earlier prohibitions below describe historical stages and do not revoke that authorization. G1 normative sources remain immutable; no merge, release, real-project deployment or paid agent execution is authorized. G2 remains open.
+
+
 Read this file before acting. Applies to Codex, Claude Code and other agents.
 
 ## Mission
