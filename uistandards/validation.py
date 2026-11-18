@@ -195,7 +195,7 @@ def check_times(result):
     import re
     for key in ('started_at', 'finished_at'):
         value = result[key]
-        if not re.fullmatch(r'\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?Z', value):
+        if not re.fullmatch(r'\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z', value):
             raise ContractError('Time must be RFC3339 UTC')
     if datetime.fromisoformat(result['finished_at'].replace('Z', '+00:00')) < datetime.fromisoformat(result['started_at'].replace('Z', '+00:00')):
         raise ContractError('End precedes start')
