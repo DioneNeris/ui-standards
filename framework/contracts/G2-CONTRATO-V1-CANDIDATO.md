@@ -1,5 +1,8 @@
 # Contrato V1 candidato — ui-design, ui-audit e ui-code-review
 
+> **Nota aditiva de estado (2026-11-18):** Este documento preserva o estado histórico de proposta. O PO posteriormente homologou o contrato para o piloto V1 e autorizou implementação e remediação técnica delimitadas, documentadas em `docs/decisions/2026-11-18-PO-V1-PILOTO.md` e relatórios posteriores. Referências abaixo a comandos inexistentes e implementação não autorizada são históricas, não o estado operacional atual. G1 não foi alterada; G2 não foi homologado integralmente; execução paga de agentes reais não autorizada.
+
+
 **Estado:** CANDIDATO PARA ACEITE DO PO; não implementado. **Versão proposta:** contrato `1.0.0`, formato de resultado `1.0.0`; baseline declarada `G1-0.1.1`. **Fonte documental examinada:** commit `a64a3a5845a3a140aee7535dcbdf0f1f3118a9f0`, branch `g2/bootstrap-framework`. Esta proposta não altera a G1, não fecha G2 e não autoriza implementação, instalação, uso em produto, publicação ou merge. A execução e a implantação do piloto exigem autorização específica posterior.
 
 ## 1. Autoridade e arquitetura
