@@ -47,17 +47,24 @@ def validate_request(request, root):
 
 def validate_result(result, request, root, request_bytes=None):
     schema_check(result, 'result', root)
-    try:
-        validate_request(request, root)
-        rules = load_baseline(root)
-    except BaselineError:
+    # A blocked diagnostic may originate in an agent unable to access the baseline,
+    # even when the independent validator can read its own healthy checkout.
+    # Validate the envelope and identity, but never accept normative findings.
+    if result['execution_state'] == 'BLOQUEADA' and not result['rules']:
         schema_check(request, 'request', root)
-        if (result['execution_state'] != 'BLOQUEADA' or result['rules'] or result['findings'] or result['evidence']
-                or not result['errors'] or result['baseline']['repository_integrity'] == 'VERIFICADA'
+        if (result['findings'] or result['evidence'] or result['changed_files']
+                or not result['errors'] or not result['limitations']
                 or result['skill'] != request['skill'] or result['mode'] != request['mode']
+                or result['target'] != request['target']
+                or result['environment'] != request['environment']
+                or result['authorization_ref'] != request['authorization']['reference']
+                or result['baseline']['repository_integrity'] == 'VERIFICADA'
+                or any(result['baseline'][k] != request['baseline'][k] for k in ('repository','commit','version','hashes'))
                 or (request_bytes is not None and result['request_ref'] != hashlib.sha256(request_bytes).hexdigest())):
             raise ContractError('Invalid blocked diagnostic')
         return result
+    validate_request(request, root)
+    rules = load_baseline(root)
     if result['skill'] != request['skill'] or result['mode'] != request['mode'] or result['target'] != request['target'] or result['environment'] != request['environment'] or result['authorization_ref'] != request['authorization']['reference'] or result['scope'] != request['target']['scope']:
         raise ContractError('Result does not match request')
     if request_bytes is not None and result['request_ref'] != hashlib.sha256(request_bytes).hexdigest():
