@@ -147,7 +147,6 @@ class BlockedDiagnosticRegressionTests(unittest.TestCase):
         res['baseline']['repository_integrity'] = 'NAO_VERIFICADA'
         res['errors'] = [{'code': 'BASELINE_MISSING', 'message': 'executor access denied',
                           'affected_ids': [], 'action': 'grant read access'}]
-        res['scope'] = 'executor could not establish scope'
         validate_result(res, req, ROOT)
         res['findings'] = [{'id':'f','rule_id':'LAY-001','method':'S','observation':'claim',
                             'impact':'unknown','evidence_ids':[]}]
@@ -170,3 +169,54 @@ class BlockedDiagnosticRegressionTests(unittest.TestCase):
         res['target'] = dict(res['target'], project='different')
         with self.assertRaises(ContractError):
             validate_result(res, req, ROOT)
+
+class AdversarialAuthorizationTests(unittest.TestCase):
+    def blocked(self):
+        req = request()
+        res = result(ROOT, req)
+        res['execution_state'] = 'BLOQUEADA'
+        res['rules'] = []
+        res['baseline']['repository_integrity'] = 'NAO_VERIFICADA'
+        res['errors'] = [{'code': 'BASELINE_MISSING', 'message': 'denied',
+                          'affected_ids': [], 'action': 'request access'}]
+        return req, res
+
+    def test_blocked_cannot_bypass_unauthorized_write(self):
+        req, res = self.blocked()
+        req['authorization']['operations'].append('implement')
+        with self.assertRaises(ContractError):
+            validate_result(res, req, ROOT)
+
+    def test_blocked_cannot_bypass_forged_baseline(self):
+        req, res = self.blocked()
+        req['baseline']['commit'] = 'a' * 40
+        res['baseline']['commit'] = 'a' * 40
+        with self.assertRaises(ContractError):
+            validate_result(res, req, ROOT)
+
+    def test_blocked_cannot_bypass_scope_mismatch(self):
+        req, res = self.blocked()
+        res['scope'] = 'unrelated'
+        with self.assertRaises(ContractError):
+            validate_result(res, req, ROOT)
+
+    def test_blocked_rejects_claimed_normative_rules(self):
+        req, res = self.blocked()
+        res['rules'] = result(ROOT, req)['rules']
+        with self.assertRaises(ContractError):
+            validate_result(res, req, ROOT)
+
+    def test_blocked_rejects_changed_files_and_artifacts_claims(self):
+        req, res = self.blocked()
+        res['changed_files'] = ['app/changed.html']
+        with self.assertRaises(ContractError):
+            validate_result(res, req, ROOT)
+
+    def test_blocked_checks_exact_request_bytes(self):
+        import hashlib, json
+        req, res = self.blocked()
+        raw = json.dumps(req, sort_keys=True).encode()
+        res['request_ref'] = hashlib.sha256(raw).hexdigest()
+        validate_result(res, req, ROOT, raw)
+        with self.assertRaises(ContractError):
+            validate_result(res, req, ROOT, raw + b' ')
