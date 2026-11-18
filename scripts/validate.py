@@ -14,24 +14,29 @@ def main():
     p = argparse.ArgumentParser()
     p.add_argument('kind', choices=('baseline', 'request', 'result'))
     p.add_argument('--package-root', required=True, type=Path)
-    p.add_argument('--file', type=Path)
-    p.add_argument('--request', type=Path)
+    p.add_argument('--file', type=Path, help='JSON file or - for stdin')
+    p.add_argument('--request', type=Path, help='Request JSON file or - for stdin')
     p.add_argument('--json', action='store_true')
     args = p.parse_args()
     try:
+        if args.kind != 'baseline' and args.file is None:
+            raise ContractError('--file is required (use - for stdin)')
+        if args.kind == 'result' and args.request is None:
+            raise ContractError('--request is required (use - for stdin)')
+        if args.kind == 'result' and args.file == Path('-') and args.request == Path('-'):
+            raise ContractError('Cannot read both request and result from stdin')
+        def read_json_bytes(path):
+            return sys.stdin.buffer.read() if path == Path('-') else path.read_bytes()
+
         if args.kind == 'baseline':
             rules = load_baseline(args.package_root)
             output = {'status': 'VALID', 'rule_count': len(rules), 'source_provenance': 'NAO_VERIFICADA'}
         else:
-            if not args.file:
-                raise ContractError('--file is required')
-            data = json.loads(args.file.read_bytes())
+            data = json.loads(read_json_bytes(args.file))
             if args.kind == 'request':
                 validate_request(data, args.package_root)
             else:
-                if not args.request:
-                    raise ContractError('--request is required')
-                raw = args.request.read_bytes()
+                raw = read_json_bytes(args.request)
                 validate_result(data, json.loads(raw), args.package_root, raw)
             output = {'status': 'VALID', 'kind': args.kind}
         print(json.dumps(output, ensure_ascii=False))
