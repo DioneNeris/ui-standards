@@ -52,7 +52,7 @@ class EvidenceTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             artifact = Path(tmp) / 'evidence.txt'; artifact.write_text('observed violation')
             res['evidence'].append({'id':'e1','rule_id':'LAY-001','method':'V','flow':'fixture','element':'fixture','state':'fixture','steps':['observe'],'observation':'violation','artifact':{'uri':str(artifact),'sha256':hashlib.sha256(artifact.read_bytes()).hexdigest(),'media_type':'text/plain'},'captured_at':'2026-11-18T12:00:00Z','executor':'reviewer','method_result':'NAO_CONFORME','sufficiency':'SUFICIENTE','sufficiency_reason':'shows violation','assessor':'reviewer','limitations':[]})
-            r=res['rules'][0]; r['applicability']='APLICAVEL'; r['status']='NAO_CONFORME'; r['method_results']=[{'method':'V','applicability':'APLICAVEL','status':'NAO_CONFORME','evidence_ids':['e1'],'reason':'observed'}]
+            r=res['rules'][0]; r['applicability']='APLICAVEL'; r['status']='NAO_CONFORME'; r['method_results']=[{'method':m,'applicability':'APLICAVEL' if m=='V' else 'INDETERMINADA','status':'NAO_CONFORME' if m=='V' else 'NAO_VERIFICADO','evidence_ids':['e1'] if m=='V' else [],'reason':'observed' if m=='V' else 'not run'} for m in r['required_methods']]
             validate_result(res,req,ROOT)
             res['evidence'][0]['captured_at']='invalid'
             with self.assertRaises(ContractError): validate_result(res,req,ROOT)
@@ -66,7 +66,7 @@ class EvidenceTests(unittest.TestCase):
     def test_unapproved_method_rejected(self):
         req = request(); res = result(ROOT, req)
         row = res["rules"][0]
-        row["method_results"] = [{"method":"V", "applicability":"APLICAVEL", "status":"NAO_VERIFICADO", "evidence_ids":[], "reason":"not run"}]
+        row["method_results"] = [{"method":m, "applicability":"INDETERMINADA", "status":"NAO_VERIFICADO", "evidence_ids":[], "reason":"not run"} for m in row['required_methods']]\n        row["method_results"][0]['applicability'] = 'APLICAVEL'
         # A method not run is allowed to be described; it cannot be claimed as executed.
         row["method_results"][0]["status"] = "CONFORME"
         with self.assertRaises(ContractError): validate_result(res,req,ROOT)
@@ -105,7 +105,7 @@ class EvidenceTests(unittest.TestCase):
             p=Path(tmp)/'proof'; p.write_text('no dialogs'); h=hashlib.sha256(p.read_bytes()).hexdigest()
             row=res['rules'][0]; row['applicability']='NAO_APLICAVEL'; row['status']='NAO_APLICAVEL'
             res['evidence'].append({'id':'na-proof','rule_id':row['id'],'method':'V','flow':'f','element':'e','state':'s','steps':['inspect'],'observation':'absent','artifact':{'uri':str(p),'sha256':h,'media_type':'text/plain'},'captured_at':'2026-11-18T12:00:00Z','executor':'reviewer','method_result':'NAO_APLICAVEL','sufficiency':'SUFICIENTE','sufficiency_reason':'absence documented','assessor':'reviewer','limitations':[]})
-            row['exceptions'].append({'rule_id':row['id'],'type':'NAO_APLICABILIDADE','context':'scope','justification':'absent','evidence_ids':['na-proof'],'approver':'PO','validity':'pilot','review_at':'2027-01-01','impact':'not applicable','approval_state':'APROVADA'})
+            req['authorization']['methods'].append('V')\n            row['exceptions'].append({'rule_id':row['id'],'type':'NAO_APLICABILIDADE','context':'scope','justification':'absent','evidence_ids':['na-proof'],'approver':'PO','validity':'pilot','review_at':'2027-01-01','impact':'not applicable','approval_state':'APROVADA'})
             validate_result(res,req,ROOT)
             row['exceptions'][0]['approval_state']='PENDENTE'
             with self.assertRaises(ContractError): validate_result(res,req,ROOT)
@@ -220,3 +220,51 @@ class AdversarialAuthorizationTests(unittest.TestCase):
         validate_result(res, req, ROOT, raw)
         with self.assertRaises(ContractError):
             validate_result(res, req, ROOT, raw + b' ')
+
+class IndependentAuditRegressions(unittest.TestCase):
+    def test_plan_rejects_claimed_changes(self):
+        req = request(); req['skill'] = 'ui-design'; req['mode'] = 'plan'
+        req['design'] = {'artifacts': [], 'constraints': []}
+        res = result(ROOT, req); res['changed_files'] = ['app/a.html']
+        with self.assertRaisesRegex(ContractError, 'Read-only changed_files'):
+            validate_result(res, req, ROOT)
+
+    def test_implement_rejects_out_of_scope_changes(self):
+        req = request(); req['skill'] = 'ui-design'; req['mode'] = 'implement'
+        req['design'] = {'artifacts': [], 'constraints': []}
+        req['authorization']['operations'].append('implement')
+        req['authorization']['writable_paths'] = ['app/']
+        res = result(ROOT, req); res['changed_files'] = ['outside/a.html']
+        with self.assertRaisesRegex(ContractError, 'outside writable paths'):
+            validate_result(res, req, ROOT)
+
+    def test_implement_rejects_unsafe_paths(self):
+        for path in ('../outside', '/etc', '.claude/skills', 'framework/', '.git/config'):
+            req = request(); req['skill'] = 'ui-design'; req['mode'] = 'implement'
+            req['design'] = {'artifacts': [], 'constraints': []}
+            req['authorization']['operations'].append('implement')
+            req['authorization']['writable_paths'] = [path]
+            with self.subTest(path=path), self.assertRaisesRegex(ContractError, 'writable path'):
+                validate_request(req, ROOT)
+
+    def test_blocked_rejects_artifacts(self):
+        req = request(); res = result(ROOT, req)
+        res['execution_state'] = 'BLOQUEADA'; res['rules'] = []
+        res['baseline']['repository_integrity'] = 'FALHOU'
+        res['errors'] = [{'code':'BASELINE_MISSING','message':'missing','affected_ids':[],'action':'retry'}]
+        res['artifacts'] = [{'uri':'file:///tmp/report','sha256':'0'*64,'media_type':'text/plain'}]
+        with self.assertRaisesRegex(ContractError, 'Invalid blocked diagnostic'):
+            validate_result(res, req, ROOT)
+
+    def test_complete_rejects_errors(self):
+        req = request(); res = result(ROOT, req)
+        res['execution_state'] = 'COMPLETA'
+        res['errors'] = [{'code':'OTHER','message':'error','affected_ids':[],'action':'retry'}]
+        with self.assertRaisesRegex(ContractError, 'Complete execution'):
+            validate_result(res, req, ROOT)
+
+    def test_missing_required_method_rejected(self):
+        req = request(); res = result(ROOT, req)
+        res['rules'][0]['method_results'] = []
+        with self.assertRaisesRegex(ContractError, 'Missing required method'):
+            validate_result(res, req, ROOT)
