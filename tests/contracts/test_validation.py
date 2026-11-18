@@ -268,3 +268,36 @@ class IndependentAuditRegressions(unittest.TestCase):
         res['rules'][0]['method_results'] = []
         with self.assertRaisesRegex(ContractError, 'Missing required method'):
             validate_result(res, req, ROOT)
+
+    def test_method_na_requires_authorization_and_approved_exception(self):
+        import hashlib, tempfile
+        req = request(); req['authorization']['methods'] = ['V']
+        res = result(ROOT, req)
+        row = res['rules'][0]
+        row['applicability'] = 'APLICAVEL'
+        row['status'] = 'CONFORME'
+        with tempfile.TemporaryDirectory() as tmp:
+            artifact = Path(tmp) / 'proof'
+            artifact.write_text('synthetic')
+            digest = hashlib.sha256(artifact.read_bytes()).hexdigest()
+            for method, state in [('V','CONFORME'),('I','NAO_APLICAVEL')]:
+                eid = 'e-'+method
+                res['evidence'].append({'id':eid,'rule_id':row['id'],'method':method,
+                    'flow':'fixture','element':'fixture','state':'fixture','steps':['inspect'],
+                    'observation':'synthetic','artifact':{'uri':str(artifact),'sha256':digest,'media_type':'text/plain'},
+                    'captured_at':'2026-11-18T12:00:00Z','executor':'fixture','method_result':state,
+                    'sufficiency':'SUFICIENTE','sufficiency_reason':'synthetic only',
+                    'assessor':'fixture','limitations':[]})
+            row['method_results'] = [
+                {'method':'V','applicability':'APLICAVEL','status':'CONFORME','evidence_ids':['e-V'],'reason':'observed'},
+                {'method':'I','applicability':'NAO_APLICAVEL','status':'NAO_APLICAVEL','evidence_ids':['e-I'],'reason':'not applicable'}]
+            with self.assertRaisesRegex(ContractError, 'Method not authorized'):
+                validate_result(res, req, ROOT)
+            req['authorization']['methods'].append('I')
+            with self.assertRaisesRegex(ContractError, 'approved exception'):
+                validate_result(res, req, ROOT)
+            row['exceptions'].append({'rule_id':row['id'],'type':'NAO_APLICABILIDADE',
+                'context':'fixture','justification':'approved externally','evidence_ids':['e-I'],
+                'approver':'PO','validity':'pilot','review_at':'2027-01-01',
+                'impact':'not applicable','approval_state':'APROVADA'})
+            validate_result(res, req, ROOT)
