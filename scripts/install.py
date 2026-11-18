@@ -17,7 +17,10 @@ def adapter(package, skill):
             f'<!-- ui-standards-generated-v1; baseline-commit={COMMIT} -->\n'
             f'Package root: `{package}`\n\nRead `{package}/skills/{skill}/SKILL.md`, '
             f'`{package}/skills/shared/CONTRACT.md`, and the contract referenced there before acting. '
-            'Validate the pinned package baseline; stop on any validation failure.\n')
+            'The baseline commit identifies the historical normative source; HEAD may advance independently. '
+            'Validate pinned normative blobs and hashes, not equality with HEAD. '
+            'Use one preapproved read-only command per call; do not expand permissions after denial. '
+            'Stop on any baseline validation failure.\n')
 
 
 def main():
