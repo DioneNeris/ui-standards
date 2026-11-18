@@ -66,7 +66,8 @@ class EvidenceTests(unittest.TestCase):
     def test_unapproved_method_rejected(self):
         req = request(); res = result(ROOT, req)
         row = res["rules"][0]
-        row["method_results"] = [{"method":m, "applicability":"INDETERMINADA", "status":"NAO_VERIFICADO", "evidence_ids":[], "reason":"not run"} for m in row['required_methods']]\n        row["method_results"][0]['applicability'] = 'APLICAVEL'
+        row["method_results"] = [{"method":m, "applicability":"INDETERMINADA", "status":"NAO_VERIFICADO", "evidence_ids":[], "reason":"not run"} for m in row['required_methods']]
+        row["method_results"][0]['applicability'] = 'APLICAVEL'
         # A method not run is allowed to be described; it cannot be claimed as executed.
         row["method_results"][0]["status"] = "CONFORME"
         with self.assertRaises(ContractError): validate_result(res,req,ROOT)
