@@ -13,6 +13,9 @@ on:
       - 'framework/**'
       - 'requirements-lock.txt'
       - '.github/workflows/ui-standards-v1.yml'
+      - '.github/workflows/ui-standards-real-agent-pilot.yml'
+      - 'AGENTS.md'
+      - 'docs/**'
   pull_request:
   workflow_dispatch:
 
@@ -78,3 +81,86 @@ jobs:
         run: |
           set -euo pipefail
           git diff --exit-code -- framework/specification tests/scenarios framework/traceability
+
+  disposable-preflight:
+    name: Disposable preflight — no model calls
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    env:
+      PIP_DISABLE_PIP_VERSION_CHECK: '1'
+      PYTHONDONTWRITEBYTECODE: '1'
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Checkout without persisted credentials
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Locked dependencies
+        run: |
+          set -euo pipefail
+          python -m venv .venv
+          .venv/bin/python -m pip install --require-hashes -r requirements-lock.txt
+          .venv/bin/python -m pip check
+      - name: Pinned baseline integrity
+        run: |
+          set -euo pipefail
+          .venv/bin/python scripts/validate.py baseline --package-root . --json
+      - name: Prepare disposable non-production project
+        run: |
+          set -euo pipefail
+          mkdir -p "${RUNNER_TEMP}/ui-standards-agent-fixture/app"
+          cat > "${RUNNER_TEMP}/ui-standards-agent-fixture/app/cadastro.html" <<'HTML'
+          <!doctype html>
+          <html lang="pt-BR">
+          <head><meta charset="utf-8"><title>Cadastro sintético</title></head>
+          <body>
+            <main>
+              <h1>Cadastro sintético</h1>
+              <form>
+                <input type="text" placeholder="Nome completo">
+                <button type="button"><svg aria-hidden="true" viewBox="0 0 16 16"><path d="M1 8h14"/></svg></button>
+              </form>
+            </main>
+          </body>
+          </html>
+          HTML
+          cd "${RUNNER_TEMP}/ui-standards-agent-fixture"
+          git init -q
+          git -c user.name='UI Standards CI' -c user.email='ci@example.invalid' add app/cadastro.html
+          git -c user.name='UI Standards CI' -c user.email='ci@example.invalid' commit -qm 'synthetic fixture'
+          git status --porcelain > "${RUNNER_TEMP}/fixture-status-before.txt"
+          git rev-parse HEAD > "${RUNNER_TEMP}/fixture-head-before.txt"
+          sha256sum app/cadastro.html > "${RUNNER_TEMP}/fixture-sha-before.txt"
+      - name: Install six adapters into disposable fixture
+        run: |
+          set -euo pipefail
+          .venv/bin/python scripts/install.py --package-root "$GITHUB_WORKSPACE" --project-root "${RUNNER_TEMP}/ui-standards-agent-fixture" --agents codex,claude --dry-run
+          .venv/bin/python scripts/install.py --package-root "$GITHUB_WORKSPACE" --project-root "${RUNNER_TEMP}/ui-standards-agent-fixture" --agents codex,claude
+          .venv/bin/python scripts/install.py --package-root "$GITHUB_WORKSPACE" --project-root "${RUNNER_TEMP}/ui-standards-agent-fixture" --agents codex,claude
+      - name: Verify fixture and capture non-sensitive manifest
+        run: |
+          set -euo pipefail
+          cd "${RUNNER_TEMP}/ui-standards-agent-fixture"
+          test "$(find .agents/skills .claude/skills -name SKILL.md -type f | wc -l)" -eq 6
+          sha256sum --check "${RUNNER_TEMP}/fixture-sha-before.txt"
+          test "$(git rev-parse HEAD)" = "$(cat "${RUNNER_TEMP}/fixture-head-before.txt")"
+          test -z "$(git diff -- app/cadastro.html)"
+          mkdir -p "${RUNNER_TEMP}/pilot-preflight-evidence"
+          cp "${RUNNER_TEMP}/fixture-sha-before.txt" "${RUNNER_TEMP}/pilot-preflight-evidence/"
+          printf 'mode=preflight-only\nmodel_calls=0\nreal_agent_execution=NAO_VERIFICADO\nread_only_enforcement=NAO_VERIFICADO\n' > "${RUNNER_TEMP}/pilot-preflight-evidence/status.txt"
+          git rev-parse HEAD > "${RUNNER_TEMP}/pilot-preflight-evidence/fixture-commit.txt"
+          find .agents/skills .claude/skills -name SKILL.md -type f | sort | sed 's@^./@@' > "${RUNNER_TEMP}/pilot-preflight-evidence/adapters.txt"
+      - name: Upload preflight evidence only
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-standards-real-agent-preflight
+          path: ${{ runner.temp }}/pilot-preflight-evidence/
+          if-no-files-found: error
+          retention-days: 14
