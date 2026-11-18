@@ -19,9 +19,10 @@ def schema_check(value, name, root):
         raise ContractError(f'{name}: {errors[0].json_path}: {errors[0].message}')
 
 
-def validate_request(request, root):
+def validate_request(request, root, verify_baseline=True):
     schema_check(request, 'request', root)
-    load_baseline(root)
+    if verify_baseline:
+        load_baseline(root)
     b = request['baseline']
     if b['commit'] != COMMIT or b['hashes'] != {k: FILES[k][1] for k in ('spec', 'matrix_derived', 'scenarios')}:
         raise ContractError('Baseline does not match pinned package')
@@ -51,11 +52,12 @@ def validate_result(result, request, root, request_bytes=None):
     # even when the independent validator can read its own healthy checkout.
     # Validate the envelope and identity, but never accept normative findings.
     if result['execution_state'] == 'BLOQUEADA' and not result['rules']:
-        schema_check(request, 'request', root)
+        validate_request(request, root, verify_baseline=False)
         if (result['findings'] or result['evidence'] or result['changed_files']
                 or not result['errors'] or not result['limitations']
                 or result['skill'] != request['skill'] or result['mode'] != request['mode']
                 or result['target'] != request['target']
+                or result['scope'] != request['target']['scope']
                 or result['environment'] != request['environment']
                 or result['authorization_ref'] != request['authorization']['reference']
                 or result['baseline']['repository_integrity'] == 'VERIFICADA'
