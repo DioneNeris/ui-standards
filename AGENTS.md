@@ -47,3 +47,7 @@ Report: objective, scope/authorization, source commit, normative version, enviro
 Inspect repository bootstrap and incoming original G1 artifacts; verify completeness, identity, 53 rule/scenario mappings and governance. Do not implement the three skills or claim successful runtime tests unless specifically authorized.
 
 See `docs/WORKFLOW.md` and `docs/PROJECT-STATUS.md`.
+
+## Infraestrutura de desenvolvimento e teste
+
+Antes de apresentar, testar ou validar uma entrega, leia `docs/INFRA-DEV.md`: onde o projeto roda (VPS de dev da Oracle, que substituiu o WSL), como subir um teste no Easypanel `dev` com endereço `https://<projeto>-dev.dioneneris.eti.br` e o que é produção (não alterar sem pedido explícito).
