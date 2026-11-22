@@ -13,7 +13,7 @@
 
 ## Ambiente
 
-O desenvolvimento acontece na **VPS de dev da Oracle** (host `oracle-dev`, Ubuntu 24.04 ARM64). O antigo WSL foi desativado. **Onde o `AGENTS.md` disser "WSL", leia "VPS de dev"** (`~/projects/ui-standards`).
+O desenvolvimento acontece na **VPS de dev da Oracle** (host `oracle-dev`, Ubuntu 24.04 ARM64). O antigo WSL fica só para testes locais e será apagado. **Onde o `AGENTS.md` disser "WSL", leia "VPS de dev"** (`~/projects/ui-standards`).
 
 Disponível: Python 3 (+ `python3 -m venv`), Git, GitHub CLI autenticado e os agentes Claude Code, Codex e Antigravity.
 
